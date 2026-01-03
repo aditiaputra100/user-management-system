@@ -1,0 +1,55 @@
+from fastapi.testclient import TestClient
+from app.main import app, create_first_superuser
+from app.dependencies.database import get_session, Base
+from app.models.user import User
+from sqlalchemy import create_engine, StaticPool
+from sqlalchemy.orm import sessionmaker
+import app.routers.auth as auth_mod
+import pytest
+
+client = TestClient(app)
+
+engine = create_engine("sqlite:///:memory:", connect_args={"check_same_thread": False}, poolclass=StaticPool)
+TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+def override_get_session():
+    with TestingSessionLocal() as session:
+        yield session
+
+def create_user(username="user@user.com", password="p", status="active") -> User:
+    password_hashed = auth_mod.get_password_hash(password)
+
+    new_user = User(
+        username=username,
+        password_hash=password_hashed,
+        status=status
+    )
+
+    with TestingSessionLocal() as db:
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+    
+    return new_user
+
+def get_access_token(client: TestClient, username: str, password: str) -> str:
+    resp = client.post("/auth/signin", data={"username": username, "password": password})
+    assert resp.status_code == 200
+    data = resp.json()
+    return data["access_token"]
+
+@pytest.fixture(scope="session")
+def client():
+    print("Setting up test client...")
+    # Create the database tables
+    Base.metadata.create_all(bind=engine)
+
+    app.dependency_overrides[get_session] = override_get_session
+    create_first_superuser(next(override_get_session()))
+
+    yield TestClient(app)
+    # Drop the database tables
+    print("Tearing down test client...")
+    Base.metadata.drop_all(bind=engine)
+
+    app.dependency_overrides.clear()
