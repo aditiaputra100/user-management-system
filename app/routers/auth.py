@@ -69,6 +69,9 @@ def authenticate_user(username: str, password: str, db: Session) -> User | None:
     if not verify_password(password, user.password_hash):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect username or password", headers={"WWW-Authenticate": "Bearer"})
 
+    if user.status != "active":
+        raise HTTPException(status_code=status.HTTP_423_LOCKED, detail="Inactive user")
+
     return user
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
@@ -86,7 +89,10 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
 
 @router.post("/auth/signup", status_code=status.HTTP_201_CREATED)
 def signup(current_user: Annotated[UserResponse, Depends(get_current_user)]):
-    pass
+    if current_user.status != "active":
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail="Only active users can create new users")
+    
+
 
 @router.post("/auth/signin", response_model=Token)
 def signin(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: Session = Depends(get_session)) -> Token:
