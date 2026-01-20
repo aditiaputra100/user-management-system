@@ -49,9 +49,10 @@ class Employee(Base):
     full_name: Mapped[str] = mapped_column(String(150), nullable=False)
     gender: Mapped[bool] = mapped_column(nullable=False) # 0 for woman, 1 for man
     birthday: Mapped[datetime] = mapped_column(nullable=False)
+    email_address: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
     phone_number: Mapped[str] = mapped_column(String(20), nullable=False)
     address: Mapped[str] = mapped_column(String(100))
-    departmen_id: Mapped[int] = mapped_column(ForeignKey("department.id"), nullable=False)
+    department_id: Mapped[int] = mapped_column(ForeignKey("department.id"), nullable=False)
     job_id: Mapped[int] = mapped_column(ForeignKey("job.id"), nullable=False)
     salary: Mapped[int] = mapped_column(default=0)
     employee_status_id: Mapped[int] = mapped_column(ForeignKey("employee_status.id"))

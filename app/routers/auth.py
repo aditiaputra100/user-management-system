@@ -6,12 +6,13 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import NoResultFound
 from app.dependencies.database import get_session
-from app.models.user import User
+from app.models.user import User, Employee
 from app.dependencies.setting import get_settings
 from datetime import datetime, timedelta, timezone
-from app.schemas import Token, UserResponse, PasswordRequest
+from app.schemas import Token, UserResponse, PasswordRequest, CreateEmployee, UserCredential
 from jwt.exceptions import InvalidTokenError
 import jwt
+import re
 
 settings = get_settings()
 
@@ -88,11 +89,45 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
     return encoded_jwt
 
 @router.post("/auth/signup", status_code=status.HTTP_201_CREATED)
-def signup(current_user: Annotated[UserResponse, Depends(get_current_user)]):
+def signup(employee: CreateEmployee, user: UserCredential, current_user: Annotated[UserResponse, Depends(get_current_user)], db: Session = Depends(get_session)):
     if current_user.status != "active":
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail="Only active users can create new users")
     
+    password_pattern = r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
 
+    if not re.match(password_pattern, user.password):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Password must be at least 8 characters long, contain at least one uppercase letter, one lowercase letter, one number, and one special character.")
+    
+    new_employee = Employee(
+        full_name=employee.full_name,
+        gender=employee.gender,
+        birthday=employee.birthday,
+        email_address=employee.email_address,
+        phone_number=employee.phone_number,
+        address=employee.address,
+        department_id=employee.department,
+        job_id=employee.job,
+        salary=employee.salary,
+        employee_status_id=employee.employee_status,
+        hire_date=employee.hire_date  
+    )
+
+    db.add(new_employee)
+    db.commit()
+    db.refresh(new_employee)
+
+    password_hashed: str = get_password_hash(user.password)
+    new_user = User(
+        employee_id=new_employee.id,
+        username=user.username,
+        password_hash=password_hashed,
+        status=user.status
+    )
+
+    db.add(new_user)
+    db.commit()
+
+    return {"msg": "User created successfully"}
 
 @router.post("/auth/signin", response_model=Token)
 def signin(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: Session = Depends(get_session)) -> Token:

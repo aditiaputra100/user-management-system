@@ -1,7 +1,7 @@
 from fastapi.testclient import TestClient
 from app.main import app, create_first_superuser
 from app.dependencies.database import get_session, Base
-from app.models.user import User
+from app.models.user import User, Department, Job, EmployeeStatus
 from sqlalchemy import create_engine, StaticPool
 from sqlalchemy.orm import sessionmaker
 import app.routers.auth as auth_mod
@@ -32,11 +32,53 @@ def create_user(username="user@user.com", password="p", status="active") -> User
     
     return new_user
 
-def get_access_token(client: TestClient, username: str, password: str) -> str:
+def create_department(name: str = "HR", description: str = "Human Resources") -> Department:
+    new_department = Department(
+        name=name,
+        description=description
+    )
+
+    with TestingSessionLocal() as db:
+        db.add(new_department)
+        db.commit()
+        db.refresh(new_department)
+    
+    return new_department
+
+def create_job(department_id: int, name: str = "Software Engineer", description: str = "Software Engineer Job") -> Job:
+    new_job = Job(
+        department_id=department_id,
+        name=name,
+        description=description
+    )
+
+    with TestingSessionLocal() as db:
+        db.add(new_job)
+        db.commit()
+        db.refresh(new_job)
+
+    return new_job
+
+def create_status_employee(name: str = "Full Time", description: str = "Full Time Employee") -> EmployeeStatus:
+    new_status = EmployeeStatus(
+        name=name,
+        description=description
+    )
+
+    with TestingSessionLocal() as db:
+        db.add(new_status)
+        db.commit()
+        db.refresh(new_status)
+
+    return new_status
+
+def get_access_token(client: TestClient, username: str, password: str, status_code: int = 200) -> str:
     resp = client.post("/auth/signin", data={"username": username, "password": password})
-    assert resp.status_code == 200
-    data = resp.json()
-    return data["access_token"]
+    assert resp.status_code == status_code
+    
+    if resp.status_code == 200:
+        data = resp.json()
+        return data["access_token"]
 
 @pytest.fixture(scope="session")
 def client():

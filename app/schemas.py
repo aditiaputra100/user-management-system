@@ -1,6 +1,12 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
+from pydantic_extra_types.phone_numbers import PhoneNumber, PhoneNumberValidator
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Annotated, Union
+
+
+E164NumberType = Annotated[
+    Union[str, PhoneNumber], PhoneNumberValidator(number_format="E164")
+]
 
 
 class DepartmentSchema(BaseModel):
@@ -36,6 +42,26 @@ class EmployeeSchema(BaseModel):
     phone_number: str
     address: str
     job: JobResponseSchema
+
+
+class CreateEmployee(BaseModel):
+    full_name: str
+    gender: bool
+    birthday: datetime
+    hire_date: datetime
+    email_address: EmailStr
+    phone_number: E164NumberType
+    address: str
+    department: int
+    job: int
+    salary: int
+    employee_status: int
+
+
+class UserCredential(BaseModel):
+    username: str
+    password: str
+    status: str
 
 
 class EmployeeListSchema(BaseModel):
