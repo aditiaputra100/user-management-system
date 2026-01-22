@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine, URL
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
-from app.dependencies.setting import get_settings
+from app.config import get_settings
 
 settings = get_settings()
 

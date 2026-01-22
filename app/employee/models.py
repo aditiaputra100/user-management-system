@@ -9,6 +9,7 @@ import uuid
 if TYPE_CHECKING:
     from app.department.models import Department, Job
     from app.auth.models import User
+    from app.presence.models import Presence
 
 
 class EmployeeStatus(Base):
@@ -44,3 +45,4 @@ class Employee(Base):
     job: Mapped["Job"] = relationship(back_populates="employee")
     employee_status: Mapped["EmployeeStatus"] = relationship(back_populates="employee")
     user: Mapped["User"] = relationship(back_populates="employee")
+    presences: Mapped[list["Presence"]] = relationship(back_populates="employee", cascade="all, delete-orphan")

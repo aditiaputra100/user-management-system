@@ -11,6 +11,7 @@ from app.auth.utils import get_password_hash
 from app.auth.models import User
 from app.department.router import router as department_router
 from app.employee.router import router as employee_router
+from app.presence.router import router as presence_router
 import logging
 
 settings = get_settings()
@@ -59,6 +60,7 @@ app = FastAPI(lifespan=lifespan)
 app.include_router(auth_router)
 app.include_router(employee_router)
 app.include_router(department_router)
+app.include_router(presence_router)
 
 @app.get("/healthcheck", include_in_schema=False)
 def healthcheck():
