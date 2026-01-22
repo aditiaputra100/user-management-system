@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine, URL
-from sqlalchemy.orm import Session, DeclarativeBase, sessionmaker
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
 from app.dependencies.setting import get_settings
 
 settings = get_settings()
@@ -20,9 +20,9 @@ else:
         port=settings.database_port, 
         database=settings.database_name).render_as_string(hide_password=False)
 
-print(DATABASE_URL)
 engine = create_engine(DATABASE_URL, echo=False)
+Session = sessionmaker(bind=engine, autoflush=False)
 
 def get_session():
-    with Session(engine, autoflush=False) as session:
+    with Session() as session:
         yield session

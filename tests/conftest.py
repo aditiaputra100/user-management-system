@@ -1,10 +1,12 @@
 from fastapi.testclient import TestClient
 from app.main import app, create_first_superuser
-from app.dependencies.database import get_session, Base
-from app.models.user import User, Department, Job, EmployeeStatus
+from app.database import get_session, Base
+from app.auth.models import User
+from app.auth.utils import get_password_hash
+from app.employee.models import EmployeeStatus
+from app.department.models import Department, Job
 from sqlalchemy import create_engine, StaticPool
 from sqlalchemy.orm import sessionmaker
-import app.routers.auth as auth_mod
 import pytest
 
 client = TestClient(app)
@@ -17,7 +19,7 @@ def override_get_session():
         yield session
 
 def create_user(username="user@user.com", password="p", status="active") -> User:
-    password_hashed = auth_mod.get_password_hash(password)
+    password_hashed = get_password_hash(password)
 
     new_user = User(
         username=username,
@@ -73,7 +75,7 @@ def create_status_employee(name: str = "Full Time", description: str = "Full Tim
     return new_status
 
 def get_access_token(client: TestClient, username: str, password: str, status_code: int = 200) -> str:
-    resp = client.post("/auth/signin", data={"username": username, "password": password})
+    resp = client.post("/login", data={"username": username, "password": password})
     assert resp.status_code == status_code
     
     if resp.status_code == 200:

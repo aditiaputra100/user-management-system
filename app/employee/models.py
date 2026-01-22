@@ -1,34 +1,14 @@
-from app.dependencies.database import Base
+from app.database import Base
 from sqlalchemy import ForeignKey, String, Uuid
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 from sqlalchemy.sql import func
 from datetime import datetime
+from typing import TYPE_CHECKING
 import uuid
 
-
-class Department(Base):
-    __tablename__ = "department"
-
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    name: Mapped[str] = mapped_column(String(150), unique=True, nullable=False)
-    description: Mapped[str] = mapped_column(String(255))
-    is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
-
-    employee: Mapped[list["Employee"]] = relationship(back_populates="department")
-    job: Mapped[list["Job"]] = relationship(back_populates="department")
-
-
-class Job(Base):
-    __tablename__ = "job"
-
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    department_id: Mapped[int] = mapped_column(ForeignKey("department.id"), nullable=False)
-    name: Mapped[str] = mapped_column(String(150), nullable=False)
-    description: Mapped[str] = mapped_column(String(255))
-    is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
-
-    department: Mapped["Department"] = relationship(back_populates="job")
-    employee: Mapped[list["Employee"]] = relationship(back_populates="job", cascade="")
+if TYPE_CHECKING:
+    from app.department.models import Department, Job
+    from app.auth.models import User
 
 
 class EmployeeStatus(Base):
@@ -64,18 +44,3 @@ class Employee(Base):
     job: Mapped["Job"] = relationship(back_populates="employee")
     employee_status: Mapped["EmployeeStatus"] = relationship(back_populates="employee")
     user: Mapped["User"] = relationship(back_populates="employee")
-
-
-class User(Base):
-    __tablename__ = "user"
-
-    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    employee_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("employee.id"), nullable=True)
-    username: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
-    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
-    status: Mapped[str] = mapped_column(String(255), default="active")
-    last_active: Mapped[datetime] = mapped_column(nullable=True)
-    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(server_default=func.now())
-
-    employee: Mapped["Employee"] = relationship(back_populates="user", single_parent=True)

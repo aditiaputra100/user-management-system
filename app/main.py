@@ -1,13 +1,19 @@
 from fastapi import FastAPI
-from app.routers import auth, department, user
-from app.dependencies import database, setting
-from app.models.user import User
+# from app.routers import auth, department, user
+# from app.dependencies import database, setting
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 from contextlib import asynccontextmanager
+from app.config import get_settings
+from app.database import get_session
+from app.auth.router import router as auth_router
+from app.auth.utils import get_password_hash
+from app.auth.models import User
+from app.department.router import router as department_router
+from app.employee.router import router as employee_router
 import logging
 
-settings = setting.get_settings()
+settings = get_settings()
 
 def create_first_superuser(db: Session) -> None:
     print("Checking for superuser...")
@@ -18,7 +24,7 @@ def create_first_superuser(db: Session) -> None:
         logging.warning("Superuser credentials are not set. Skipping superuser creation.")
         return
 
-    password_hashed: str = auth.get_password_hash(password)
+    password_hashed: str = get_password_hash(password)
    
     stmt = select(User).where(User.username == username)
 
@@ -41,7 +47,7 @@ def create_first_superuser(db: Session) -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    db: Session = next(database.get_session())
+    db: Session = next(get_session())
 
     create_first_superuser(db)
 
@@ -50,12 +56,12 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-app.include_router(auth.router)
-app.include_router(department.router)
-app.include_router(user.router)
+app.include_router(auth_router)
+app.include_router(employee_router)
+app.include_router(department_router)
 
-@app.get("/")
-def hello_world():
+@app.get("/healthcheck", include_in_schema=False)
+def healthcheck():
     return {
-        "Hello": "World"
+        "msg": "OK"
     }
