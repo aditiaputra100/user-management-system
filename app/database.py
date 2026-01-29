@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, URL
+from sqlalchemy import create_engine, URL, inspect
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 from app.config import get_settings
 
@@ -22,6 +22,9 @@ else:
 
 engine = create_engine(DATABASE_URL, echo=False)
 Session = sessionmaker(bind=engine, autoflush=False)
+
+inspector = inspect(engine)
+list_of_tables = inspector.get_table_names()
 
 def get_session():
     with Session() as session:

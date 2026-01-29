@@ -2,12 +2,12 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import Annotated
 from app.database import get_session
-from app.auth.dependencies import get_current_user
+from app.policy.dependencies import require_permission
 from .service import get_all, get_by_id, create, create_status, get_all_status
 from .schemas import EmployeesSchema, EmployeeSchema, CreateEmployeeSchema, CreateUserSchema, CreateEmployeeStatusSchema, EmployeeStatusSchema, EmployeeStatusesSchema
 import uuid
 
-router = APIRouter(prefix="/employee", tags=["Employee"], dependencies=[Depends(get_current_user)])
+router = APIRouter(prefix="/employee", tags=["Employee"], dependencies=[Depends(require_permission("employee_status", "list"))])
 
 @router.get("/status")
 def get_employee_status(db: Session = Depends(get_session)) -> EmployeeStatusesSchema:
@@ -24,7 +24,7 @@ def get_employee_status(db: Session = Depends(get_session)) -> EmployeeStatusesS
         count=len(statuses)
     )
 
-@router.post("/status", status_code=status.HTTP_201_CREATED)
+@router.post("/status", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_permission("employee_status", "create"))])
 def create_employee_status(employee_status: CreateEmployeeStatusSchema, db: Session = Depends(get_session)):
 
     try:
@@ -49,7 +49,7 @@ def create_employee_status(employee_status: CreateEmployeeStatusSchema, db: Sess
         "msg": f"Success created status {employee_status.name}"
     }
 
-@router.get("/{id}")
+@router.get("/{id}", dependencies=[Depends(require_permission("employee", "read"))])
 def get_employee(id: uuid.UUID, db: Annotated[Session, Depends(get_session)]) -> EmployeeSchema:
     employee = get_by_id(id, db)
 
@@ -76,7 +76,7 @@ def get_employee(id: uuid.UUID, db: Annotated[Session, Depends(get_session)]) ->
         updated_at=employee.updated_at
     )
 
-@router.get("")
+@router.get("", dependencies=[Depends(require_permission("employee", "list"))])
 def get_all_employees(db: Annotated[Session, Depends(get_session)]) -> EmployeesSchema:
     employees = get_all(db)
 
@@ -100,7 +100,7 @@ def get_all_employees(db: Annotated[Session, Depends(get_session)]) -> Employees
         count=len(employees)
     )
 
-@router.post("", status_code=status.HTTP_201_CREATED)
+@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_permission("employee", "create"))])
 def create_employee(employee: CreateEmployeeSchema, user: CreateUserSchema, db: Annotated[Session, Depends(get_session)]):
     try:
         create(employee, user, db)
