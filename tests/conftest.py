@@ -9,8 +9,6 @@ from sqlalchemy import create_engine, StaticPool
 from sqlalchemy.orm import sessionmaker
 import pytest
 
-client = TestClient(app)
-
 engine = create_engine("sqlite:///:memory:", connect_args={"check_same_thread": False}, poolclass=StaticPool)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -84,16 +82,19 @@ def get_access_token(client: TestClient, username: str, password: str, status_co
 
 @pytest.fixture(scope="session")
 def client():
-    print("Setting up test client...")
+    app.dependency_overrides[get_session] = override_get_session
+
+    yield TestClient(app)
+
+    app.dependency_overrides.clear()
+
+@pytest.fixture
+def db():
     # Create the database tables
     Base.metadata.create_all(bind=engine)
 
-    app.dependency_overrides[get_session] = override_get_session
-    create_first_superuser(next(override_get_session()))
-
-    yield TestClient(app)
+    with TestingSessionLocal() as Session:
+        yield Session
+    
     # Drop the database tables
-    print("Tearing down test client...")
     Base.metadata.drop_all(bind=engine)
-
-    app.dependency_overrides.clear()
