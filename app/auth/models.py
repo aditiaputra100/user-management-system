@@ -10,6 +10,7 @@ import uuid
 
 if TYPE_CHECKING:
     from app.employee.models import Employee
+    from app.policy.models import Role
 
 
 class User(Base):
@@ -23,8 +24,11 @@ class User(Base):
     last_active: Mapped[datetime] = mapped_column(nullable=True)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    is_superuser: Mapped[bool] = mapped_column(server_default="0", default=False, nullable=True)
+    role_id: Mapped[int] = mapped_column(ForeignKey("roles.id"), nullable=True)
 
     employee: Mapped["Employee"] = relationship(back_populates="user", single_parent=True)
+    role: Mapped["Role"] = relationship(back_populates="users")
 
     def reset_password(self, new_password: str):
         # password_pattern = r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"

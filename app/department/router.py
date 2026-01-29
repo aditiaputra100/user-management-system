@@ -1,14 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import Annotated
 from sqlalchemy.orm import Session
-from app.auth.dependencies import get_current_user
+from app.policy.dependencies import require_permission
 from app.database import get_session
 from .schemas import CreateDepartmentSchema, DepartmentSchema, DepartmentsSchema, UpdateDepartmentSchema, JobSchema, CreateJobSchema
 from .service import create, get_all, get_by_id, update, delete, create_job
 
 router = APIRouter(prefix="/department", tags=["Department"])
 
-@router.post("/", dependencies=[Depends(get_current_user)], status_code=status.HTTP_201_CREATED)
+@router.post("/", dependencies=[Depends(require_permission("department", "create"))], status_code=status.HTTP_201_CREATED)
 def create_department(department: CreateDepartmentSchema, db: Annotated[Session, Depends(get_session)]):
     try:
         create(
@@ -62,7 +62,7 @@ def get_department(id: int, db: Annotated[Session, Depends(get_session)]) -> Dep
         id=department.id
     )
 
-@router.put("/{id}", dependencies=[Depends(get_current_user)])
+@router.put("/{id}", dependencies=[Depends(require_permission("department", "update"))])
 def update_department(id: int, department: UpdateDepartmentSchema, db: Annotated[Session, Depends(get_session)]):
     try:
         update(
@@ -83,7 +83,7 @@ def update_department(id: int, department: UpdateDepartmentSchema, db: Annotated
         "msg": f"Success updated department with ID {id}"
     }
 
-@router.delete("/{id}", dependencies=[Depends(get_current_user)])
+@router.delete("/{id}", dependencies=[Depends(require_permission("department", "delete"))])
 def delete_department(id: int, db: Annotated[Session, Depends(get_session)]):
     try:
         delete(
@@ -99,7 +99,7 @@ def delete_department(id: int, db: Annotated[Session, Depends(get_session)]):
         "msg": f"Success deleted department with ID {id}"
     }
 
-@router.post("/{id}/job", status_code=status.HTTP_201_CREATED, dependencies=[Depends(get_current_user)])
+@router.post("/{id}/job", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_permission("job", "create"))])
 def create_job_for_department(id: int, job: CreateJobSchema, db: Annotated[Session, Depends(get_session)]):
     try:
         create_job(
