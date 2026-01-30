@@ -13,7 +13,7 @@ def create_presence(status: str, employee_id: str, db: Session) -> None:
         if not already_clock:
             new_presence = Presence(
                 employee_id=employee_id,
-                clock_in=datetime.now().isoformat(),
+                clock_in=datetime.now(),
                 status=status
             )
 
@@ -25,7 +25,7 @@ def create_presence(status: str, employee_id: str, db: Session) -> None:
         if already_clock.clock_out:
             raise ValueError("Have filled in today's attendance")
 
-        already_clock.clock_out = datetime.now().isoformat()
+        already_clock.clock_out = datetime.now()
         db.commit()
 
         return
