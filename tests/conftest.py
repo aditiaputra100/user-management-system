@@ -91,10 +91,10 @@ def client():
 @pytest.fixture
 def db():
     # Create the database tables
-    Base.metadata.create_all(bind=engine)
+    # Base.metadata.create_all(bind=engine)
 
     with TestingSessionLocal() as Session:
         yield Session
     
     # Drop the database tables
-    Base.metadata.drop_all(bind=engine)
+    # Base.metadata.drop_all(bind=engine)
