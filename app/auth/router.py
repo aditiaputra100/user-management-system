@@ -56,7 +56,7 @@ def read_users_me(current_user: Annotated[User, Depends(get_current_user)]) -> U
         last_active=current_user.last_active if current_user.last_active else None
     )
 
-@router.put("/me/change-password")
+@router.patch("/me/change-password")
 def change_password(password: str, current_user: Annotated[User, Depends(get_current_user)], db: Annotated[Session, Depends(get_session)]):
     new_password: str = password
 

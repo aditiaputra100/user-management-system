@@ -9,6 +9,7 @@ from app.auth.models import User
 from app.department.models import Department, Job
 from app.employee.models import Employee, EmployeeStatus
 from app.presence.models import Presence
+from app.policy.models import Role, Permission, role_permissions
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
