@@ -7,7 +7,7 @@ def create_presence(status: str, employee_id: str, db: Session) -> None:
     stmt = select(Presence).where(Presence.employee_id == employee_id
                                     and Presence.created_at == date.today())
     already_clock = db.scalars(stmt).one_or_none()
-    
+
     if status == StatusType.PRESENT:
 
         if not already_clock:
@@ -22,7 +22,7 @@ def create_presence(status: str, employee_id: str, db: Session) -> None:
 
             return
         
-        if already_clock.clock_out:
+        if already_clock.clock_out or already_clock.status != StatusType.PRESENT:
             raise ValueError("Have filled in today's attendance")
 
         already_clock.clock_out = datetime.now()
