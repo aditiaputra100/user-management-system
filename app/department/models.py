@@ -20,7 +20,7 @@ class Department(Base):
     updated_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
     employee: Mapped[list["Employee"]] = relationship(back_populates="department")
-    job: Mapped[list["Job"]] = relationship(back_populates="department")
+    job: Mapped[list["Job"]] = relationship(back_populates="department", cascade="all, delete-orphan")
 
 
 class Job(Base):
@@ -35,4 +35,4 @@ class Job(Base):
     updated_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
     department: Mapped["Department"] = relationship(back_populates="job")
-    employee: Mapped[list["Employee"]] = relationship(back_populates="job", cascade="")
+    employee: Mapped[list["Employee"]] = relationship(back_populates="job")
