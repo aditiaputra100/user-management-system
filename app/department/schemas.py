@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional
 
 
@@ -10,6 +10,8 @@ class CreateJobSchema(BaseModel):
 
 class JobSchema(CreateJobSchema):
     id: int
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CreateDepartmentSchema(BaseModel):

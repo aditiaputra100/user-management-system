@@ -59,7 +59,8 @@ def get_department(id: int, db: Annotated[Session, Depends(get_session)]) -> Dep
         name=department.name,
         description=department.description,
         is_active=department.is_active,
-        id=department.id
+        id=department.id,
+        jobs=department.job
     )
 
 @router.put("/{id}", dependencies=[Depends(require_permission("department", "update"))])
