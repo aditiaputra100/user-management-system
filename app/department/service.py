@@ -17,7 +17,7 @@ def create(name: str, description: str | None, db: Session, is_active: bool = Tr
 
     except IntegrityError:
         db.rollback()
-        raise ValueError(f"Duplicate entry {name}")
+        raise ValueError(f"Duplicate entry department {name}")
 
     except Exception as err:
         db.rollback()
@@ -36,7 +36,7 @@ def update(department_id: int, name: str | None, description: str | None, is_act
     department = db.get(Department, department_id)
 
     if not department:
-        raise NameError(f"Department with ID {department_id} not found")
+        raise NameError(f"Department with ID {department_id} is not found")
 
     if name is not None:
         department.name = name
@@ -50,7 +50,7 @@ def update(department_id: int, name: str | None, description: str | None, is_act
 
     except IntegrityError:
         db.rollback()
-        raise ValueError(f"Duplicate entry {name}")
+        raise ValueError(f"Duplicate entry department {name}")
 
     except Exception as err:
         db.rollback()
@@ -61,7 +61,7 @@ def delete(department_id: int, db: Session) -> None:
     department = db.get(Department, department_id)
 
     if not department:
-        raise NameError(f"Department with ID {department_id} not found")
+        raise NameError(f"Department with ID {department_id} is not found")
 
     try:
         db.delete(department)
@@ -86,12 +86,21 @@ def create_job(department_id: int, name: str, description: str | None, db: Sessi
     )
 
     try:
+        job_names = [job.name.lower() for job in department.job]
+
+        if new_job.name.lower() in job_names:
+            raise ValueError(f"Duplicate entry job {name} on Department {department.name}")
+
         db.add(new_job)
         db.commit()
 
     except IntegrityError:
         db.rollback()
-        raise ValueError(f"Duplicate entry {name}")
+        raise ValueError(f"Duplicate entry job {name} on Department {department.name}")
+    
+    except ValueError as err:
+        db.rollback()
+        raise ValueError(str(err))
 
     except Exception as err:
         db.rollback()
