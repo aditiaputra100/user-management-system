@@ -46,6 +46,14 @@ def test_get_by_id(db):
     assert not_found_department == None
 
 def test_update(db):
+    create_department = Department(id=66,
+                                   name="New Department 66", 
+                                   description="New Description")
+
+    db.add(create_department)
+    db.commit()
+    db.refresh(create_department)
+
     update(department_id=55,
            name="Updated Department",
            description=None,
@@ -67,7 +75,7 @@ def test_update(db):
 
     updated_name = "Updated Department"
     with pytest.raises(ValueError, match=f"Duplicate entry department {updated_name}"):
-        update(department_id=55,
+        update(department_id=66,
                name=updated_name,
                description=None,
                is_active=None,

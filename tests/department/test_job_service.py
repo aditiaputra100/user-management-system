@@ -39,7 +39,7 @@ def test_create_job_duplicate(db):
         db=db
     )
 
-    with pytest.raises(ValueError, match="Duplicate entry job Software Developer"):
+    with pytest.raises(ValueError, match="Duplicate entry job Software Developer on Department IT"):
         create_job(
         department_id=67,
         name="Software Developer",
