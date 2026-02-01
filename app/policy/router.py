@@ -115,7 +115,7 @@ def get_permission(id: int, db: Annotated[Session, Depends(get_session)]):
     return permission
 
 @permission_router.put("/{id}", dependencies=[Depends(require_permission("permissions", "update"))])
-def update_permission(id: int, permission: PermissionSchema, db: Annotated[Session, Depends(get_session)]):
+def update_permission(id: int, permission: CreatePermissionSchema, db: Annotated[Session, Depends(get_session)]):
     try:
         update_p(
             id,

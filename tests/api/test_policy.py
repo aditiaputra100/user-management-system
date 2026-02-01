@@ -131,7 +131,7 @@ class TestPermissionEndpoints:
 
         assert permission["name"] == "Testing Permission"
         assert permission["resource"] == "testing"
-        assert permission["action"] == "testing"
+        assert permission["action"] == "read"
     
     def test_get_permission_not_found(self, client):
         """Test retrieving a non-existent permission."""        
@@ -210,7 +210,7 @@ def setup_module():
     create_role(45, "Testing Role 2", "Testing Description 2")
 
     # Create permission
-    create_permission(33, "Testing Permission", "testing", "testing", "testing")
+    create_permission(33, "Testing Permission", "testing", "read", "testing")
 
     # Create admin
     create_user("admin", "admin", "active", is_superuser=True)
