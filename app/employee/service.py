@@ -82,3 +82,42 @@ def get_all_status(db: Session) -> list[EmployeeStatus]:
     status: list[EmployeeStatus] = db.scalars(stmt).all()
     
     return status
+
+def update_status(id: int, name: str, description: str | None, is_active: bool | None, db: Session):
+    emp_status = db.get(EmployeeStatus, id)
+
+    if not emp_status:
+        raise NameError(f"Employee status ID {id} is not found")
+    
+    emp_status.name = name
+
+    if description is not None:
+        emp_status.description = description
+    
+    if is_active is not None:
+        emp_status.is_active = is_active
+
+    try:
+        db.commit()
+    
+    except IntegrityError:
+        db.rollback()
+        raise ValueError(f"Employee status with name {name} had already exists")
+
+    except Exception as err:
+        db.rollback()
+        raise RuntimeError(str(err))
+    
+def delete_status(id: int, db: Session):
+    emp_status = db.get(EmployeeStatus, id)
+
+    if emp_status is None:
+        raise NameError(f"Employee status ID {id} is not found")
+    
+    try:
+        db.delete(emp_status)
+        db.commit()
+    
+    except Exception as err:
+        db.rollback()
+        raise RuntimeError(str(err))

@@ -67,7 +67,7 @@ class CreateUserSchema(BaseModel):
 
 class CreateEmployeeStatusSchema(BaseModel):
     name: str
-    description: str
+    description: str = ""
     is_active: bool = True
 
 

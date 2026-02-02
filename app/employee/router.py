@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import Annotated
 from app.database import get_session
 from app.policy.dependencies import require_permission
-from .service import get_all, get_by_id, create, create_status, get_all_status
+from .service import get_all, get_by_id, create, create_status, get_all_status, update_status, delete_status
 from .schemas import EmployeesSchema, EmployeeSchema, CreateEmployeeSchema, CreateUserSchema, CreateEmployeeStatusSchema, EmployeeStatusSchema, EmployeeStatusesSchema
 import uuid
 
@@ -47,6 +47,45 @@ def create_employee_status(employee_status: CreateEmployeeStatusSchema, db: Sess
 
     return {
         "msg": f"Success created status {employee_status.name}"
+    }
+
+@router.put("/status/{id}", dependencies=[Depends(require_permission("employee_status", "update"))])
+def update_employee_status(id: int, employee_status: CreateEmployeeStatusSchema, db: Annotated[Session, Depends(get_session)]):
+    try:
+        update_status(
+            id=id,
+            name=employee_status.name,
+            description=employee_status.description,
+            is_active=employee_status.is_active,
+            db=db
+        )
+
+    except NameError as err:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(err))
+    
+    except ValueError as err:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(err))
+    
+    except RuntimeError as err:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
+
+    return {
+        "mgs": "Employee status updated successfully"
+    }
+
+@router.delete("/status/{id}", dependencies=[Depends(require_permission("employee_status", "delete"))])
+def delete_employee_status(id: int, db: Annotated[Session, Depends(get_session)]):
+    try:
+        delete_status(id, db)
+    
+    except NameError as err:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(err))
+
+    except RuntimeError as err:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(err))
+    
+    return {
+        "mgs": "Employee status deleted successfully"
     }
 
 @router.get("/{id}", dependencies=[Depends(require_permission("employee", "read"))])
