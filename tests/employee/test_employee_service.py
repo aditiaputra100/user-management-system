@@ -10,7 +10,7 @@ import uuid
 def test_get_all(db):
     from app.employee.service import get_all
 
-    employees = get_all(db)
+    employees = get_all(10, 1, db)
 
     assert len(employees) > 0
     assert employees[0].id == uuid.UUID("00000000-0000-0000-0000-000000000001", version=4)
@@ -25,7 +25,7 @@ def test_get_by_id(db):
 
     assert employee != None
     assert employee.full_name == "Doe John"
-    assert employee.job.name == "Software Engineer"
+    assert employee.job == "Software Engineer"
 
 def test_get_by_email(db):
     from app.employee.service import get_by_email
@@ -82,6 +82,47 @@ def test_create(db):
     assert user is not None
     assert user.username == "new_employee"
     assert verify_password("new_employee123", user.password_hash)
+
+def test_update(db):
+    from app.employee.service import update
+
+    update_employee = CreateEmployeeSchema(
+        full_name="John Doe Updated",
+        gender=True,
+        birthday=datetime(year=1999, month=3, day=18),
+        hire_date=datetime.now(),
+        email_address="john.doe@email.com",
+        phone_number="+62812345678910",
+        address="Simple address",
+        department=11,
+        job=3,
+        salary=3000000,
+        employee_status=10,
+    )
+
+    update(
+        id=uuid.UUID("00000000-0000-0000-0000-000000000001", version=4),
+        employee=update_employee,
+        db=db
+    )
+
+    employee = db.get(Employee, uuid.UUID("00000000-0000-0000-0000-000000000001", version=4))
+
+    assert employee is not None
+    assert employee.full_name == "John Doe Updated"
+    assert employee.updated_at.hour == datetime.now().hour
+
+def test_delete(db):
+    from app.employee.service import delete
+
+    delete(
+        id=uuid.UUID("00000000-0000-0000-0000-000000000001", version=4),
+        db=db
+    )
+
+    employee = db.get(Employee, uuid.UUID("00000000-0000-0000-0000-000000000001", version=4))
+
+    assert employee is None
 
 def setup_module():
     # Create the database tables 

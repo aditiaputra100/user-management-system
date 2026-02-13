@@ -3,8 +3,8 @@ from sqlalchemy.orm import Session
 from typing import Annotated
 from app.database import get_session
 from app.policy.dependencies import require_permission
-from .service import get_all, get_by_id, create, create_status, get_all_status, update_status, delete_status
-from .schemas import EmployeesSchema, EmployeeSchema, CreateEmployeeSchema, CreateUserSchema, CreateEmployeeStatusSchema, EmployeeStatusSchema, EmployeeStatusesSchema
+from .service import get_all, get_by_id, create, update, delete, create_status, get_all_status, update_status, delete_status
+from .schemas import EmployeesSchema, EmployeeSchema, CreateEmployeeSchema, UpdateUserSchema, CreateUserSchema, CreateEmployeeStatusSchema, EmployeeStatusSchema, EmployeeStatusesSchema
 import uuid
 
 router = APIRouter(prefix="/employee", tags=["Employee"], dependencies=[Depends(require_permission("employee_status", "list"))])
@@ -88,8 +88,8 @@ def delete_employee_status(id: int, db: Annotated[Session, Depends(get_session)]
         "mgs": "Employee status deleted successfully"
     }
 
-@router.get("/{id}", dependencies=[Depends(require_permission("employee", "read"))])
-def get_employee(id: uuid.UUID, db: Annotated[Session, Depends(get_session)]) -> EmployeeSchema:
+@router.get("/{id}", response_model=EmployeeSchema, dependencies=[Depends(require_permission("employee", "read"))])
+def get_employee(id: uuid.UUID, db: Annotated[Session, Depends(get_session)]):
     employee = get_by_id(id, db)
 
     if employee is None:
@@ -98,26 +98,45 @@ def get_employee(id: uuid.UUID, db: Annotated[Session, Depends(get_session)]) ->
             detail="Employee not found"
         )
 
-    return EmployeeSchema(
-        id=employee.id,
-        full_name=employee.full_name,
-        gender=employee.gender,
-        birthday=employee.birthday,
-        email_address=employee.email_address,
-        phone_number=employee.phone_number,
-        address=employee.address,
-        department=employee.department.name,
-        job=employee.job.name,
-        salary=employee.salary,
-        employee_status=employee.employee_status.name,
-        hire_date=employee.hire_date,
-        created_at=employee.created_at,
-        updated_at=employee.updated_at
-    )
+    return employee
+
+@router.put("/{id}", dependencies=[Depends(require_permission("employee", "update"))])
+def update_employee(id: uuid.UUID, employee: CreateEmployeeSchema, db: Annotated[Session, Depends(get_session)]):
+    try:
+        update(id, employee, db)
+
+    except NameError as err:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(err))
+
+    except ValueError as err:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(err)
+        )
+    except RuntimeError as err:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(err)
+        )
+
+    return {"msg": "Employee and user update successfully"}
+
+@router.delete("{id}", dependencies=[Depends(require_permission("employee", "delete"))])
+def delete_employee(id: uuid.UUID, db: Annotated[Session, Depends(get_session)]):
+    try:
+        delete(id, db)
+    
+    except RuntimeError as err:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(err)
+        )
+    
+    return {"msg": "Employee delete successfully"}
 
 @router.get("", dependencies=[Depends(require_permission("employee", "list"))])
-def get_all_employees(db: Annotated[Session, Depends(get_session)]) -> EmployeesSchema:
-    employees = get_all(db)
+def get_all_employees(db: Annotated[Session, Depends(get_session)], per_page: int = 10, page: int = 1) -> EmployeesSchema:
+    employees = get_all(per_page, page, db)
 
     return EmployeesSchema(
         data=[EmployeeSchema(
@@ -136,7 +155,8 @@ def get_all_employees(db: Annotated[Session, Depends(get_session)]) -> Employees
             created_at=emp.created_at,
             updated_at=emp.updated_at
         ) for emp in employees],
-        count=len(employees)
+        count=len(employees),
+        page=page,
     )
 
 @router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_permission("employee", "create"))])

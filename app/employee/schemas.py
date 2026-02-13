@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, EmailStr, field_validator, ConfigDict
 from pydantic_extra_types.phone_numbers import PhoneNumber, PhoneNumberValidator
 from typing import Annotated, Union
 import uuid
@@ -29,6 +29,7 @@ class EmployeeSchema(BaseModel):
 class EmployeesSchema(BaseModel):
     data: list[EmployeeSchema]
     count: int
+    page: int
 
 
 class CreateEmployeeSchema(BaseModel):
@@ -56,6 +57,7 @@ class CreateUserSchema(BaseModel):
     username: str
     password: str
     status: str
+    role_id: int | None = None
 
     @field_validator("password")
     @classmethod
@@ -64,6 +66,9 @@ class CreateUserSchema(BaseModel):
             raise ValueError("Password must be at least 8 characters long")
         return v
 
+class UpdateUserSchema(BaseModel):
+    status: str | None = None
+    role_id: int | None = None
 
 class CreateEmployeeStatusSchema(BaseModel):
     name: str
